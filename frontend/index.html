@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Payslip Assistant - Trusted answers from your own payslips</title>
+  <meta name="description" content="Enterprise payslip Q&A assistant with full source transparency, powered by Gemini." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128737;</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+            mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "monospace"],
+          },
+          colors: {
+            brand: { 50: "#eef4ff", 100: "#dbe7ff", 500: "#3b6cf6", 600: "#2451e6", 700: "#1c3fc0", 900: "#132a73" },
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="h-full bg-slate-50 font-sans text-slate-800 antialiased">
+  <div class="min-h-full flex flex-col">
+    <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+      <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6">
+        <div class="flex items-center gap-3">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-900 text-white shadow-md">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-lg font-semibold leading-tight text-slate-900">Payslip Assistant</h1>
+            <p class="text-xs text-slate-500">Trusted answers, straight from your own payslips</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <span id="engine-badge" class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+            <span class="h-2 w-2 animate-pulse rounded-full bg-slate-400"></span> Connecting...
+          </span>
+          <label for="employee-select" class="sr-only">Signed-in employee (demo)</label>
+          <div class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 shadow-sm">
+            <span class="text-xs font-medium uppercase tracking-wide text-slate-400">Signed in as</span>
+            <select id="employee-select" class="rounded-md border-0 bg-transparent py-0.5 pl-1 pr-7 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-brand-500"></select>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto grid w-full max-w-7xl flex-1 grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-12">
+      <aside class="space-y-6 lg:col-span-4">
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" aria-labelledby="overview-title">
+          <div class="bg-gradient-to-br from-brand-600 to-brand-900 px-5 py-5 text-white">
+            <div class="flex items-start justify-between">
+              <div>
+                <p id="overview-title" class="text-xs font-medium uppercase tracking-wider text-brand-100">Latest payslip</p>
+                <p id="overview-period" class="mt-0.5 text-sm text-brand-100">&nbsp;</p>
+              </div>
+              <span class="rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-medium">Nordvale Logistics NV</span>
+            </div>
+            <p class="mt-4 text-xs text-brand-100">Net pay</p>
+            <p id="overview-net" class="text-3xl font-bold tracking-tight">-</p>
+            <p id="overview-employee" class="mt-1 text-xs text-brand-100">&nbsp;</p>
+          </div>
+          <dl id="overview-stats" class="grid grid-cols-2 divide-x divide-y divide-slate-100 text-sm">
+            <div class="p-4"><dt class="text-xs text-slate-500">Gross salary</dt><dd class="mt-1 font-semibold text-slate-900" data-field="gross_salary">-</dd></div>
+            <div class="p-4"><dt class="text-xs text-slate-500">Social security (13.07%)</dt><dd class="mt-1 font-semibold text-slate-900" data-field="employee_social_security">-</dd></div>
+            <div class="p-4"><dt class="text-xs text-slate-500">Withholding tax</dt><dd class="mt-1 font-semibold text-slate-900" data-field="withholding_tax">-</dd></div>
+            <div class="p-4"><dt class="text-xs text-slate-500">Meal vouchers</dt><dd class="mt-1 font-semibold text-slate-900" data-field="meal_vouchers_count">-</dd></div>
+            <div class="col-span-2 p-4"><dt class="text-xs text-slate-500">Legal vacation days remaining</dt><dd class="mt-1 font-semibold text-slate-900" data-field="remaining_legal_vacation_days">-</dd></div>
+          </dl>
+        </section>
+
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" aria-labelledby="history-title">
+          <div class="flex items-center justify-between">
+            <h2 id="history-title" class="text-sm font-semibold text-slate-900">Payslip history</h2>
+            <span class="text-xs text-slate-400">Click to open the full document</span>
+          </div>
+          <ul id="payslip-list" class="mt-3 space-y-2" aria-live="polite">
+            <li class="h-14 animate-pulse rounded-xl bg-slate-100"></li>
+            <li class="h-14 animate-pulse rounded-xl bg-slate-100"></li>
+            <li class="h-14 animate-pulse rounded-xl bg-slate-100"></li>
+          </ul>
+        </section>
+
+        <section class="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 text-sm text-emerald-900" aria-labelledby="how-title">
+          <h2 id="how-title" class="flex items-center gap-2 font-semibold">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" /></svg>
+            How answers stay trustworthy
+          </h2>
+          <ol class="mt-3 list-decimal space-y-1.5 pl-5 text-emerald-800">
+            <li>Only <strong>your</strong> payslips are searched for relevant sections.</li>
+            <li>The exact section text is sent to Gemini with a strict "answer only from the payslip" instruction.</li>
+            <li>Every figure in the answer is checked against the source text.</li>
+            <li>The sources are shown below each answer so you can verify them yourself.</li>
+          </ol>
+        </section>
+      </aside>
+
+      <section class="flex min-h-[70vh] flex-col rounded-2xl border border-slate-200 bg-white shadow-sm lg:col-span-8" aria-labelledby="chat-title">
+        <div class="border-b border-slate-100 px-5 py-4">
+          <h2 id="chat-title" class="text-base font-semibold text-slate-900">Ask a question about your payslip</h2>
+          <p class="text-sm text-slate-500">Ask in plain language. Every answer comes with the payslip text it is based on.</p>
+        </div>
+
+        <div id="conversation" class="flex-1 space-y-6 overflow-y-auto px-5 py-5 scrollbar-thin" aria-live="polite">
+          <div id="empty-state" class="flex h-full flex-col items-center justify-center py-10 text-center">
+            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+              <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" /></svg>
+            </div>
+            <h3 class="mt-4 text-base font-semibold text-slate-900">What would you like to know?</h3>
+            <p class="mt-1 max-w-md text-sm text-slate-500">Try one of these questions, or write your own below.</p>
+            <div id="suggestions" class="mt-5 flex max-w-2xl flex-wrap justify-center gap-2"></div>
+          </div>
+        </div>
+
+        <form id="ask-form" class="border-t border-slate-100 p-4" novalidate>
+          <div id="quick-suggestions" class="mb-3 hidden flex-wrap gap-2"></div>
+          <div class="flex items-end gap-3 rounded-2xl border border-slate-300 bg-white p-2 shadow-sm focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-100">
+            <label for="question" class="sr-only">Your question</label>
+            <textarea id="question" rows="1" maxlength="500" required
+              class="max-h-40 min-h-[44px] flex-1 resize-none border-0 bg-transparent px-2 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-0"
+              placeholder='e.g. "Why is my net pay lower this month compared to last month?"'></textarea>
+            <button id="ask-button" type="submit"
+              class="inline-flex h-11 items-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60">
+              <span id="ask-button-label">Ask</span>
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" /></svg>
+            </button>
+          </div>
+          <div class="mt-2 flex items-center justify-between px-1 text-xs text-slate-400">
+            <span>Press Enter to send, Shift + Enter for a new line.</span>
+            <span><span id="char-count">0</span>/500</span>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <footer class="border-t border-slate-200 bg-white">
+      <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-xs text-slate-400 sm:px-6">
+        <span>Hackathon prototype. All payslip data is fictional (SD Worx-style format).</span>
+        <a href="/docs" class="font-medium text-brand-600 hover:underline">API documentation</a>
+      </div>
+    </footer>
+  </div>
+
+  <div id="payslip-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-100 px-5 py-3">
+        <div>
+          <h3 id="modal-title" class="text-sm font-semibold text-slate-900">Full payslip</h3>
+          <p id="modal-subtitle" class="text-xs text-slate-500"></p>
+        </div>
+        <button id="modal-close" type="button" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800" aria-label="Close">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+      <pre id="modal-body" class="payslip-text flex-1 overflow-auto bg-slate-50 p-5 text-xs leading-relaxed text-slate-800"></pre>
+    </div>
+  </div>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
