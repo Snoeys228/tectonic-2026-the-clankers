@@ -32,7 +32,7 @@ from config import Settings
 from database import Payslip, PayslipRepository
 from models import AskRequest, AskResponse, SourceSnippet
 from services.offline_answerer import NOT_FOUND_MESSAGE, answer_offline
-from services.retrieval import RetrievalResult, period_label, retrieve
+from services.retrieval import RetrievalResult, asks_about_other_people, period_label, retrieve
 
 logger = logging.getLogger("payslip_assistant.ai")
 
@@ -58,6 +58,11 @@ Rules you must always follow:
    listing several reasons or line items.
 8. "confidence" is a number between 0 and 1 expressing how completely the sources support your answer.
 """
+
+OTHER_PEOPLE_MESSAGE = (
+    "I can only answer questions about your own payslips. Information about other employees, such as your "
+    "manager or colleagues, is not part of your payslip documents, so I cannot provide it."
+)
 
 _AMOUNT_RE = re.compile(r"(?<![\d.,])-?\d{1,3}(?:,\d{3})+(?:\.\d{2})?(?![\d])|(?<![\d.,])-?\d+\.\d{2}(?![\d])")
 
@@ -155,6 +160,15 @@ class PayslipAssistant:
         employee = self.repository.get_employee(request.employee_id)
         payslips = self.repository.get_payslips(request.employee_id)
         retrieval = retrieve(request.question, payslips)
+
+        if asks_about_other_people(request.question):
+            return self._build_response(
+                request, replace(retrieval, snippets=[]), started,
+                answer=OTHER_PEOPLE_MESSAGE, answer_found=False, cited_ids=[], confidence=0.95,
+                mode="gemini" if self._client is not None else "offline",
+                model=self.settings.gemini_model if self._client is not None else None,
+                warnings=["Privacy guard: questions about other employees are not sent to the AI model."],
+            )
 
         warnings: list[str] = []
         if retrieval.missing_periods:

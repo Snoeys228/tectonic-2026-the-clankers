@@ -91,6 +91,17 @@ def test_out_of_scope_question(client):
     assert body["confidence_score"] <= 0.5
 
 
+@pytest.mark.parametrize(
+    "question",
+    ["What is my manager's salary?", "How much does my colleague Lucas earn?", "What is the average salary here?"],
+)
+def test_questions_about_other_people_are_refused(client, question):
+    body = ask(client, "EMP-100234", question)
+    assert body["answer_found"] is False
+    assert body["source_snippets"] == []
+    assert "own payslips" in body["answer_summary"]
+
+
 def test_validation_errors(client):
     response = client.post("/api/ask", json={"employee_id": "12345", "question": "net pay?"})
     assert response.status_code == 422
@@ -194,6 +205,16 @@ async def test_gemini_hallucinated_figures_are_flagged():
     response = await _assistant(models).answer(AskRequest(employee_id="EMP-100234", question="What is my net pay?"))
     assert any("9,999.99" in w for w in response.warnings)
     assert response.confidence_score < 0.9
+
+
+@pytest.mark.anyio
+async def test_privacy_guard_never_calls_gemini():
+    models = _FakeModels(GeminiAnswer(answer="x", answer_found=True, source_ids=[], confidence=1.0))
+    response = await _assistant(models).answer(
+        AskRequest(employee_id="EMP-100234", question="What is my manager's salary?")
+    )
+    assert models.calls == []
+    assert response.answer_found is False
 
 
 @pytest.mark.anyio

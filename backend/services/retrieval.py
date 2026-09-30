@@ -84,6 +84,14 @@ COMPARISON_TERMS = {
     "decreased", "drop", "dropped", "jump", "jumped", "fell", "rise", "rose",
 }
 PAY_SECTIONS = {"net_pay", "earnings", "tax", "net_adjustments", "social_security", "header"}
+THIRD_PARTY_TERMS = {
+    "manager", "managers", "boss", "bosses", "colleague", "colleagues", "coworker", "coworkers", "co-worker",
+    "co-workers", "supervisor", "ceo", "cfo", "cto", "director", "directors", "teammate", "teammates",
+}
+THIRD_PARTY_PHRASES = (
+    "other employee", "another employee", "someone else", "somebody else", "everyone", "other people",
+    "average salary", "salaries of", "salary of others",
+)
 COMPARISON_BOOSTS = {
     "net_pay": 2.5, "earnings": 2.0, "tax": 1.2, "net_adjustments": 1.0, "social_security": 0.8, "header": 0.6,
 }
@@ -168,6 +176,12 @@ def keyword_scores(question: str) -> dict[str, float]:
         if score:
             scores[section] = score
     return scores
+
+
+def asks_about_other_people(question: str) -> bool:
+    """True if the question targets someone else's pay, which this assistant must never answer."""
+    text = normalise(question)
+    return bool(set(tokenize(question)) & THIRD_PARTY_TERMS) or any(p in text for p in THIRD_PARTY_PHRASES)
 
 
 def is_comparison_question(question: str) -> bool:
